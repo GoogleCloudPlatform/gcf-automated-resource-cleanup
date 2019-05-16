@@ -70,7 +70,7 @@ def resizePD(request):
                         vm = instanceName
                         zone = name.rsplit('/',1)[1] # zone name
                         print ("zone is " + zone)
-                        # return 'Instance name is: {}\n'.format(instanceName)
+                        print  ('Instance name is: {}\n'.format(instanceName))
         listRequest = compute.instances().aggregatedList_next(previous_request=listRequest, previous_response=listResponse)
     
     # generate timestamped values
@@ -84,9 +84,9 @@ def resizePD(request):
     vmGetResponse = vmGetRequest.execute()
     instance = vmGetResponse["name"]
  
-    # get first disk - assuming it's the boot disk
-    currentBootDiskSource = vmGetResponse["disks"][0]["source"]
-    diskDeviceName = vmGetResponse["disks"][0]["deviceName"]
+    # get second disk - do not operate on boot disk
+    currentBootDiskSource = vmGetResponse["disks"][1]["source"]
+    diskDeviceName = vmGetResponse["disks"][1]["deviceName"]
     currentBootDisk = currentBootDiskSource.rsplit('/', 1)[-1]
     
     # fetch the disk
@@ -136,6 +136,36 @@ def resizePD(request):
     else:
         print("vm is already stopped") # if not running, we're done
     
+    # detach current boot disk
+    print("detaching existing disk: " + currentBootDisk)
+    detachResponse = (compute.instances().detachDisk(project=project, zone=zone, instance=vm, deviceName=diskDeviceName)).execute()
+    waitForZoneOperation(detachResponse, project, zone)
+    print("detached disk")
+
+    # attach new disk
+    print("attaching new disk")
+    attachBody = {
+        "boot" : "false",
+        "source" : newDiskId
+    }
+    attachResponse = (compute.instances().attachDisk(project=project, zone=zone, instance=vm, body=attachBody)).execute()
+    waitForZoneOperation(attachResponse, project, zone)
+    print("attached new disk")
+
+    # start the VM
+    print("starting VM")
+     # check if the machine is running first
+    vmGetReponse = (compute.instances().get(project=project, zone=zone, instance=vm)).execute()
+    print("getting VM status")
+    vmStatus = vmGetReponse["status"]
+    if (vmStatus != 'RUNNING'): 
+        print("vm is not running")
+        startResponse = (compute.instances().start(project=project, zone=zone, instance=vm)).execute()
+        waitForZoneOperation(startResponse, project, zone)
+        print("started VM")
+    else:
+        print("vm is already running") # if running, we're done
+
     return ("PD resized!")
 
 
