@@ -102,8 +102,7 @@ def resizePD(request):
     snapshot_body = {
         "name" : newSnapshotName
     }
-    snapRequest = compute.disks().createSnapshot(project=project, zone=zone, disk=currentBootDisk, body=snapshot_body)
-    snapResponse = snapRequest.execute() # operation
+    snapResponse = (compute.disks().createSnapshot(project=project, zone=zone, disk=currentBootDisk, body=snapshot_body)).execute()
     print('took snapshot: ' + newSnapshotName)
     print('operation status is: ' + str(snapResponse["status"]))
     waitForZoneOperation(snapResponse, project, zone)
@@ -119,12 +118,23 @@ def resizePD(request):
         "sizeGb" : newDiskSize,
         "sourceSnapshotId" : snapShotId
     }
-    # diskCreateRequest = compute.disks().insert(project=project, zone=zone, body=disk_body)
     diskCreateResponse = (compute.disks().insert(project=project, zone=zone, body=disk_body)).execute() 
     print("started disk creation")
     waitForZoneOperation(diskCreateResponse, project, zone)
     newDiskId = diskCreateResponse["targetLink"]
     print("disk creation complete: " + newDiskId)
+
+    # stop VM if it's running
+    # check if the machine is running first
+    print("getting VM status")
+    vmStatus = vmGetResponse["status"]
+    if (vmStatus == 'RUNNING'): # if machine is running, stop it
+        print("stopping vm")
+        stopResponse = (compute.instances().stop(project=project, zone=zone, instance=vm)).execute()
+        waitForZoneOperation(stopResponse, project, zone)
+        print("stopped VM")
+    else:
+        print("vm is already stopped") # if not running, we're done
     
     return ("PD resized!")
 
