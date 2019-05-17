@@ -1,5 +1,10 @@
 # for execution in Cloud Functions Python 3.7.1
 
+# modify these variables for your environment:
+project = 'automating-cost-optimization'
+authorizedUsername = "postman"
+authorizedPassword = "postman"
+
 # imports
 import datetime
 import googleapiclient
@@ -17,20 +22,18 @@ from basicauth import decode
 # initialize global
 compute = googleapiclient.discovery.build('compute', 'v1')
 credentials = GoogleCredentials.get_application_default()
-project = 'automating-cost-optimization'
 zone = ''
 vm = ''
 snapShotId = ''
 newDiskId = ''
 
 # define helper functions
-# TODO create a function to wait for operation to complete
 
 def authorizeRequest (request):
     encoded_str = request.headers.get('Authorization')
     username, password = decode(encoded_str)
     #TODO update username and password
-    if (username == "postman", password == "postman"):
+    if (username == authorizedUsername, password == authorizedPassword):
         return True
     return False
 
