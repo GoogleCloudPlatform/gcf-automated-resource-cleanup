@@ -79,8 +79,7 @@ def resizePD(request):
     # generate timestamped values
     d = datetime.utcnow()
     unixtime = calendar.timegm(d.utctimetuple())
-    newSnapshotName = vm + str(unixtime)
-    newDiskName = newSnapshotName
+
     
     # get the VM in question
     vmGetRequest = compute.instances().get(project=project, zone=zone, instance=vm)
@@ -88,24 +87,27 @@ def resizePD(request):
     instance = vmGetResponse["name"]
  
     # get second disk - do not operate on boot disk
-    currentBootDiskSource = vmGetResponse["disks"][1]["source"]
+    currentDiskSource = vmGetResponse["disks"][1]["source"]
     diskDeviceName = vmGetResponse["disks"][1]["deviceName"]
-    currentBootDisk = currentBootDiskSource.rsplit('/', 1)[-1]
+    currentDisk = currentDiskSource.rsplit('/', 1)[-1]
     
     # fetch the disk
     print("fetching disk")
-    diskGetRequest = compute.disks().get(project=project, zone=zone, disk=currentBootDisk)
+    diskGetRequest = compute.disks().get(project=project, zone=zone, disk=currentDisk)
     diskGetResponse = diskGetRequest.execute()
     print("got disk: " + diskGetResponse["name"])
     originalDiskSize = diskGetResponse["sizeGb"]
     print ("original disk size is: " + str(originalDiskSize))
+
+    newSnapshotName = diskDeviceName + str(unixtime)
+    newDiskName = newSnapshotName
 
     # create the snapshot
     print('taking snapshot ' + newSnapshotName)
     snapshot_body = {
         "name" : newSnapshotName
     }
-    snapResponse = (compute.disks().createSnapshot(project=project, zone=zone, disk=currentBootDisk, body=snapshot_body)).execute()
+    snapResponse = (compute.disks().createSnapshot(project=project, zone=zone, disk=currentDisk, body=snapshot_body)).execute()
     print('took snapshot: ' + newSnapshotName)
     print('operation status is: ' + str(snapResponse["status"]))
     waitForZoneOperation(snapResponse, project, zone)
@@ -140,7 +142,7 @@ def resizePD(request):
         print("vm is already stopped") # if not running, we're done
     
     # detach current boot disk
-    print("detaching existing disk: " + currentBootDisk)
+    print("detaching existing disk: " + currentDisk)
     detachResponse = (compute.instances().detachDisk(project=project, zone=zone, instance=vm, deviceName=diskDeviceName)).execute()
     waitForZoneOperation(detachResponse, project, zone)
     print("detached disk")
