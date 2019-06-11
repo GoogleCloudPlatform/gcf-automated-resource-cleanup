@@ -47,17 +47,11 @@ def waitForZoneOperation(operationResponse, project, zone):
         time.sleep(3)
 
 # main function
-def resizePD(request):
+def resizePD():
     
-    # Authorize incoming request 
-    if (authorizeRequest(request)==False):
-        print ("Unauthorized request")
-        return ("Unauthorized request")
-    print ("authorized request")
 
-    # process incoming body 
-    request_json = request.get_json(force=True)
-    id = request_json['incident']['resource_id']
+
+    id = '3773729775088064755'
 
     # get aggregated VM list and get our VM
     listRequest = compute.instances().aggregatedList(project=project, filter='id={}'.format(id))
@@ -183,5 +177,7 @@ def resizePD(request):
         print("vm is already running") # if running, we're done
 
     return ("PD resized!")
+
+resizePD();
 
 
