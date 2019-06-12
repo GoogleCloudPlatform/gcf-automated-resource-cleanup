@@ -27,7 +27,7 @@ exports.deleteUnattachedPD = (req, res) => {
                 console.log("disk " + metadata.name + " is " + metadata.status);
                 console.log("disk " + metadata.name + " was last attached on " + metadata.lastAttachTimestamp);
 
-                // handle never attached disk
+                // handle never attached disk - delete
                 if (metadata.lastAttachTimestamp==undefined) {
                     item.delete(function(err, oepration, apiResponse2){
                         if (err){
@@ -36,19 +36,36 @@ exports.deleteUnattachedPD = (req, res) => {
                     });
                 }
 
+                // handle orphaned disk - 
+                // calculate age
+                // if older than (x) -  take a snapshot and delete
+
                 // compute age by convering ISO 8601 timestamps to Date
                 var sinceLastAttach = computeDiskAge(new Date(metadata.lastAttachTimestamp));
  
                 //  handle old currently unattached disk
-                if ((sinceLastAttach > -1) && metadata.users==null){ // specify your own preferred age of disk here
-                    console.log("deleting old disk " + metadata.name);
-                    // take snapshot and delete
-                    // add snapshot code
-                    item.delete(function(err, oepration, apiResponse2){
-                        if (err){
-                            console.log("could not delete disk: " + err);
-                        }
-                    });
+                if ((sinceLastAttach > -1) // specify your own preferred age of disk here
+                    && metadata.users==null){ // not in use currently
+                        
+                        // timestamp the snapshot name
+                        var snapshotName = metadata.name + new Date().getTime;
+                        console.log("creating snapshot named " + snapshotName);
+                        // take a snapshot
+                        item.createSnapshot(function(err, operation, snapResponse){
+                            if (err){
+                                console.log("could not create snapshot: " + err);
+                            }
+                            console.log("created snapshot: " + snapResponse);
+                        })
+
+                        // delete
+                        console.log("deleting old disk " + metadata.name);
+                        item.delete(function(err, oepration, apiResponse2){
+                            if (err){
+                                console.log("could not delete disk: " + err);
+                            }
+                            console.log("deleted disk");
+                        });
                 }            
             })
         }
