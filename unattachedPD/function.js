@@ -10,7 +10,7 @@
 // Imports the Google Cloud client library
 const Compute = require('@google-cloud/compute');
 
-exports.deleteUnattachedPD = (req, res) => {
+exports.unattachedPD = (req, res) => {
     console.log("function called!");
     const compute = new Compute();
     
