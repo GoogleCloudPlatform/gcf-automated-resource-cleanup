@@ -48,7 +48,7 @@ exports.unattachedPD = (req, res) => {
                     && metadata.users==null){ // not in use currently
                         
                         // timestamp the snapshot name
-                        var snapshotName = metadata.name + new Date().getTime;
+                        var snapshotName = metadata.name + new Date().getTime();
                         console.log("creating snapshot named " + snapshotName);
                         // take a snapshot
                         item.createSnapshot(function(err, operation, snapResponse){
