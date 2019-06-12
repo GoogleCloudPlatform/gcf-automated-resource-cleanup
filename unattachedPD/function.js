@@ -51,21 +51,20 @@ exports.unattachedPD = (req, res) => {
                         var snapshotName = metadata.name + new Date().getTime();
                         console.log("creating snapshot named " + snapshotName);
                         // take a snapshot
-                        item.createSnapshot(function(err, operation, snapResponse){
-                            if (err){
-                                console.log("could not create snapshot: " + err);
+                        item.createSnapshot(function(snapshotErr, snapOperation, snapResponse){
+                            if (snapshotErr){
+                                console.log("could not create snapshot: " + snapshotErr);
                             }
                             console.log("created snapshot: " + snapResponse);
+                            // delete
+                            console.log("deleting old disk " + metadata.name);
+                            item.delete(function(deleteErr, deleteOperation, deleteResponse){
+                                if (err){
+                                    console.log("could not delete disk: " + err);
+                                }
+                                console.log("deleted disk");
+                            });
                         })
-
-                        // delete
-                        console.log("deleting old disk " + metadata.name);
-                        item.delete(function(err, oepration, apiResponse2){
-                            if (err){
-                                console.log("could not delete disk: " + err);
-                            }
-                            console.log("deleted disk");
-                        });
                 }            
             })
         }
