@@ -67,6 +67,7 @@ def deleteUnattachedPDs(request):
                         print ("disk " + diskName + " was never attached - deleting")
                         deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
                         deleteResponse = deleteRequest.execute()
+                        waitForZoneOperation(deleteResponse, project, diskZone)
                         print ("disk " + diskName + " was deleted")
                         continue
 
@@ -93,12 +94,14 @@ def deleteUnattachedPDs(request):
                             }
                             snapshotRequest = compute.disks().createSnapshot(project=project, zone=diskZone, disk=diskName, body=snapshotBody)
                             snapshotResponse = snapshotRequest.execute()
+                            waitForZoneOperation(snapshotResponse, project, diskZone)
                             print ("snapshot completed")
 
                             # delete the disk
                             print ("deleting disk " + diskName)
                             deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
                             deleteResponse = deleteRequest.execute()
+                            waitForZoneOperation(deleteResponse, project, diskZone)
                             print ("disk " + diskName + " was deleted")
                             continue
 
