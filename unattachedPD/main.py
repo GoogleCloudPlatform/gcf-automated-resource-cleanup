@@ -7,6 +7,7 @@ authorizedPassword = "postman"
 
 # imports
 import datetime
+import dateutil.parser
 import googleapiclient
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
@@ -18,6 +19,7 @@ from flask import request
 from flask import Flask
 from flask import escape
 from basicauth import decode
+import pytz
 
 # initialize global
 compute = googleapiclient.discovery.build('compute', 'v1')
@@ -55,7 +57,9 @@ def deleteUnattachedPDs():
                     diskZone = str((disk['zone'])).rsplit('/',1)[1]
                     print (diskName)
                     print (diskZone)
+                   
                     # handle never attached disk - delete it
+                    # lastAttachedTimestamp is not present
                     try:
                         if disk['lastAttachTimestamp'] is None:
                             print ("none!")
@@ -64,6 +68,31 @@ def deleteUnattachedPDs():
                         deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
                         deleteResponse = deleteRequest.execute()
                         print ("disk was deleted")
+
+                    # handle detached disk - snapshot and delete
+                    # lastAttachTimestamp is present AND users is not present
+
+                    try:
+                        if disk['users'] is None and disk['lastDetachTimestamp'] is not None:
+                            print ("users is none")
+                    except KeyError:
+                        print ("disk has no users and has been detached")
+                        detachTimestamp = dateutil.parser.parse(disk['lastDetachTimestamp'])
+                        detachedFor = pytz.utc.localize(datetime.utcnow()) - detachTimestamp
+                        
+                        print ("disk has been detached for " + str(detachedFor))
+                        
+                        # update this for your preferred age
+                        if detachedFor.days > -1:
+                            # take a snapshot
+                            snapShotName = diskName + str(int(time.time()))
+                            print ("taking snapshot: " + snapShotName)
+                            snapshotBody = {
+                                "name": snapShotName
+                            }
+                            snapshotRequest = compute.disks().createSnapshot(project=project, zone=diskZone, disk=diskName, body=snapshotBody)
+                            snapshotResponse = snapshotRequest.execute()
+
 
         disksRequest = compute.disks().aggregatedList_next(previous_request=disksRequest, previous_response=diskResponse)
 
