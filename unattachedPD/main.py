@@ -52,15 +52,18 @@ def deleteUnattachedPDs():
                 # got disks
                 for disk in disks_scoped_list['disks']: # iterate through disks
                     diskName = disk['name']
+                    diskZone = str((disk['zone'])).rsplit('/',1)[1]
                     print (diskName)
-                    
+                    print (diskZone)
                     # handle never attached disk - delete it
                     try:
                         if disk['lastAttachTimestamp'] is None:
                             print ("none!")
                     except KeyError:
-                        print ("disk was never attached")
-                        deleteRequest = 
+                        print ("disk was never attached - deleting")
+                        deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
+                        deleteResponse = deleteRequest.execute()
+                        print ("disk was deleted")
 
         disksRequest = compute.disks().aggregatedList_next(previous_request=disksRequest, previous_response=diskResponse)
 
