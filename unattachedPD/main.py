@@ -26,14 +26,6 @@ compute = googleapiclient.discovery.build('compute', 'v1')
 credentials = GoogleCredentials.get_application_default()
 
 # define helper functions
-def authorizeRequest (request):
-    encoded_str = request.headers.get('Authorization')
-    username, password = decode(encoded_str)
-    #TODO update username and password
-    if (username == authorizedUsername, password == authorizedPassword):
-        return True
-    return False
-
 def waitForZoneOperation(operationResponse, project, zone):
     status = operationResponse["status"]
     name = operationResponse["name"]
