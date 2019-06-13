@@ -64,10 +64,11 @@ def deleteUnattachedPDs():
                         if disk['lastAttachTimestamp'] is None:
                             print ("none!")
                     except KeyError:
-                        print ("disk was never attached - deleting")
+                        print ("disk " + diskName + " was never attached - deleting")
                         deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
                         deleteResponse = deleteRequest.execute()
-                        print ("disk was deleted")
+                        print ("disk " + diskName + " was deleted")
+                        continue
 
                     # handle detached disk - snapshot and delete
                     # lastAttachTimestamp is present AND users is not present
@@ -76,7 +77,7 @@ def deleteUnattachedPDs():
                         if disk['users'] is None and disk['lastDetachTimestamp'] is not None:
                             print ("users is none")
                     except KeyError:
-                        print ("disk has no users and has been detached")
+                        print ("disk " + diskName + " has no users and has been detached")
                         detachTimestamp = dateutil.parser.parse(disk['lastDetachTimestamp'])
                         detachedFor = pytz.utc.localize(datetime.utcnow()) - detachTimestamp
                         
@@ -92,6 +93,14 @@ def deleteUnattachedPDs():
                             }
                             snapshotRequest = compute.disks().createSnapshot(project=project, zone=diskZone, disk=diskName, body=snapshotBody)
                             snapshotResponse = snapshotRequest.execute()
+                            print ("snapshot completed")
+
+                            # delete the disk
+                            print ("deleting disk " + diskName)
+                            deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
+                            deleteResponse = deleteRequest.execute()
+                            print ("disk " + diskName + " was deleted")
+                            continue
 
 
         disksRequest = compute.disks().aggregatedList_next(previous_request=disksRequest, previous_response=diskResponse)
