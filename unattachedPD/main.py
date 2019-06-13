@@ -44,7 +44,7 @@ def waitForZoneOperation(operationResponse, project, zone):
         time.sleep(3)
 
 # main function
-def deleteUnattachedPDs():
+def deleteUnattachedPDs(request):
     # get list of disks and iterate through it:
     disksRequest = compute.disks().aggregatedList(project=project)
     while disksRequest is not None:
@@ -104,5 +104,4 @@ def deleteUnattachedPDs():
 
 
         disksRequest = compute.disks().aggregatedList_next(previous_request=disksRequest, previous_response=diskResponse)
-
-deleteUnattachedPDs()
+    return ("disk deletion completed")
