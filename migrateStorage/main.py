@@ -35,6 +35,4 @@ def migrateStorage(request):
     bucket.storage_class = "NEARLINE"
     bucket.patch()
 
-migrateStorage()
-
 
