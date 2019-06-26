@@ -26,7 +26,7 @@ def migrateStorage(request):
     bucket_name = request_json['incident']['resource_name']
 
     # create storage client
-    storage_client = storage.Client()
+    storage_client = storage.Client(project)
 
     # get bucket
     bucket = storage_client.get_bucket(bucket_name)
