@@ -19,23 +19,20 @@ compute = googleapiclient.discovery.build('compute', 'v1')
 credentials = GoogleCredentials.get_application_default()
 
 # main function
-def migrateStorage():
-#def migrateStorage(request):
+def migrateStorage(request):
     # process incoming request to get the bucket to be migrated:
-    #request_json = request.get_json(force=True)
+    request_json = request.get_json(force=True)
     # bucket names are globally unique
-    #bucket_name = request_json['incident']['resource_name']
-    bucket_name = 'automating-cost-optimization-idle-bucket'
+    bucket_name = request_json['incident']['resource_name']
+
     # create storage client
     storage_client = storage.Client()
 
     # get bucket
     bucket = storage_client.get_bucket(bucket_name)
 
-    # update property
+    # update storage class
     bucket.storage_class = "NEARLINE"
-    
-    # patch the bucket
     bucket.patch()
 
 migrateStorage()
