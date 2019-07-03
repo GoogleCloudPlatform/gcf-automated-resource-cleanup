@@ -19,7 +19,7 @@ compute = googleapiclient.discovery.build('compute', 'v1')
 credentials = GoogleCredentials.get_application_default()
 
 # main function
-def migrate-storage-function(request):
+def migrate_storage(request):
     # process incoming request to get the bucket to be migrated:
     request_json = request.get_json(force=True)
     # bucket names are globally unique

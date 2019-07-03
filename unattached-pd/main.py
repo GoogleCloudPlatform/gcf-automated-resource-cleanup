@@ -36,7 +36,7 @@ def waitForZoneOperation(operationResponse, project, zone):
         time.sleep(3)
 
 # main function
-def delete-unattached-pds(request):
+def delete_unattached_pds(request):
     # get list of disks and iterate through it:
     disksRequest = compute.disks().aggregatedList(project=project)
     while disksRequest is not None:
