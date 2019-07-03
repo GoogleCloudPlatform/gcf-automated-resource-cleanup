@@ -10,7 +10,7 @@
 // Imports the Google Cloud client library
 const Compute = require('@google-cloud/compute');
 
-exports.unused-ip-functtion = (req, res) => {
+exports.unused_ip_function = (req, res) => {
     
     console.log("function called!");
     
