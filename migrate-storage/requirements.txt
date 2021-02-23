@@ -9,7 +9,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-Flask==0.12.2
+Flask==1.0
 Flask-WTF==0.14.2
 google==2.0.1
 google-api-core==1.1.0
