@@ -11,10 +11,6 @@
 
 # for execution in Cloud Functions Python 3.7.1
 
-# modify these variables for your environment:
-project = 'automating-cost-optimization'
-authorizedUsername = "postman"
-authorizedPassword = "postman"
 
 # imports
 import datetime
@@ -48,7 +44,15 @@ def waitForZoneOperation(operationResponse, project, zone):
 
 # main function
 def delete_unattached_pds(request):
+    assert request.args and 'project' in request.args, '"project" argument required.'
+    project = request.args['project']
+    dry_run = True
+
+    if dry_run:
+        print ('*** Running in dry_run mode. No disks will be harmed. ***')
     # get list of disks and iterate through it:
+    print ("fetching list of disks under project: " + project)
+    # TODO(brad): Add filter to reduce response size.
     disksRequest = compute.disks().aggregatedList(project=project)
     while disksRequest is not None:
         diskResponse = disksRequest.execute()
@@ -58,37 +62,29 @@ def delete_unattached_pds(request):
                 for disk in disks_scoped_list['disks']: # iterate through disks
                     diskName = disk['name']
                     diskZone = str((disk['zone'])).rsplit('/',1)[1]
-                    print (diskName)
-                    print (diskZone)
                    
                     # handle never attached disk - delete it
                     # lastAttachedTimestamp is not present
-                    try:
-                        if disk['lastAttachTimestamp'] is None:
-                            print ("none!")
-                    except KeyError:
-                        print ("disk " + diskName + " was never attached - deleting")
-                        deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
-                        deleteResponse = deleteRequest.execute()
-                        waitForZoneOperation(deleteResponse, project, diskZone)
-                        print ("disk " + diskName + " was deleted")
+                    if 'lastAttachTimestamp' not in disk:
+                        print ("disk " + diskName + " was never attached")
+                        if not dry_run:
+                            deleteRequest = compute.disks().delete(project=project, zone=diskZone, disk=diskName)
+                            deleteResponse = deleteRequest.execute()
+                            waitForZoneOperation(deleteResponse, project, diskZone)
+                            print ("disk " + diskName + " was deleted")
                         continue
 
                     # handle detached disk - snapshot and delete
                     # lastAttachTimestamp is present AND users is not present
 
-                    try:
-                        if disk['users'] is None and disk['lastDetachTimestamp'] is not None:
-                            print ("users is none")
-                    except KeyError:
-                        print ("disk " + diskName + " has no users and has been detached")
+                    if 'users' not in disk and 'lastDetachTimestamp' in disk:
                         detachTimestamp = dateutil.parser.parse(disk['lastDetachTimestamp'])
                         detachedFor = pytz.utc.localize(datetime.utcnow()) - detachTimestamp
                         
-                        print ("disk has been detached for " + str(detachedFor))
+                        print ("disk " + diskName + " has no users and has been detached for " + str(detachedFor))
                         
                         # update this for your preferred age
-                        if detachedFor.days > -1:
+                        if detachedFor.days > -1 and not dry_run:
                             # take a snapshot
                             snapShotName = diskName + str(int(time.time()))
                             print ("taking snapshot: " + snapShotName)
@@ -110,4 +106,4 @@ def delete_unattached_pds(request):
 
 
         disksRequest = compute.disks().aggregatedList_next(previous_request=disksRequest, previous_response=diskResponse)
-    return ("disk deletion completed")
+    return ("disk scan completed")
